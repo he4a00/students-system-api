@@ -33,7 +33,8 @@ const getStudent = async (req, res) => {
   try {
     const student = await Student.findOne({ _id: id })
       .populate("monthlyPayment")
-      .populate("teacher");
+      .populate("teacher")
+      .populate("attendence");
 
     if (!student) {
       return res.status(404).json("There Is No Student With this id");

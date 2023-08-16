@@ -11,7 +11,6 @@ const studentSchema = new mongoose.Schema({
     required: [true, "student must have a phone number"],
     validate: {
       validator: function (value) {
-        // Use the isMobilePhone method from the validator package
         return validator.isMobilePhone(value, "any", { strictMode: false });
       },
       message: "Invalid phone number format",
@@ -34,7 +33,29 @@ const studentSchema = new mongoose.Schema({
       ref: "Teacher",
     },
   ],
-  attendence: [{ type: mongoose.Schema.Types.ObjectId, ref: "Attendence" }],
+  attendence: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Attendence",
+    },
+  ],
+});
+
+studentSchema.pre("remove", async function () {
+  await mongoose
+    .model("MonthlyPayment")
+    .deleteMany({ _id: { $in: this.monthlyPayment } });
+
+  await mongoose
+    .model("Teacher")
+    .updateMany(
+      { _id: { $in: this.teacher } },
+      { $pull: { students: this._id } }
+    );
+
+  await mongoose
+    .model("Attendance")
+    .deleteMany({ _id: { $in: this.attendance } });
 });
 
 const Student = mongoose.model("Student", studentSchema);

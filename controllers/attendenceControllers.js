@@ -25,7 +25,7 @@ const markAttendance = async (req, res) => {
 
     const attendanceRecord = new Attendence({
       date: attendanceDate,
-      present,
+      present: true,
     });
     await attendanceRecord.save();
     student.attendence.push(attendanceRecord._id);
