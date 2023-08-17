@@ -1,5 +1,6 @@
 const Attendence = require("../models/Attendence");
 const Student = require("../models/Student");
+const corn = require("node-cron");
 
 const markAttendance = async (req, res) => {
   const { id } = req.params;
@@ -35,5 +36,34 @@ const markAttendance = async (req, res) => {
     return res.status(500).json(error.message);
   }
 };
+
+cron.schedule("0 0 * * *", async () => {
+  try {
+    const students = await Student.find().populate("attendence");
+
+    for (const student of students) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const attendanceRecord = student.attendence.find(
+        (attendance) => attendance.date.toDateString() === today.toDateString()
+      );
+
+      if (!attendanceRecord) {
+        const newAttendanceRecord = new Attendence({
+          date: today,
+          present: false,
+        });
+        await newAttendanceRecord.save();
+        student.attendence.push(newAttendanceRecord._id);
+        await student.save();
+      }
+    }
+
+    console.log("Daily attendance update completed.");
+  } catch (error) {
+    console.error("Error updating daily attendance:", error);
+  }
+});
 
 module.exports = { markAttendance };
