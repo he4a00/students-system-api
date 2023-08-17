@@ -1,22 +1,27 @@
 const Student = require("../models/Student");
 
 const getAllStudents = async (req, res) => {
-  // work on pagination
   try {
     const page = parseInt(req.query.page) || 1;
 
     const perPage = 10;
     const totalStudents = await Student.countDocuments();
     const totalPages = Math.ceil(totalStudents / perPage);
+
+    if (totalPages === 0) {
+      return res.status(200).json({
+        totalStudents: 0,
+        totalPages: 0,
+        currentPage: page,
+        students: [],
+      });
+    }
+
     const students = await Student.find()
       .skip((page - 1) * perPage)
       .limit(perPage)
       .populate("monthlyPayment")
       .populate("teacher");
-
-    if (students.length === 0) {
-      return res.status(404).json("No Students");
-    }
 
     res.status(200).json({
       totalStudents: totalStudents,
@@ -28,6 +33,7 @@ const getAllStudents = async (req, res) => {
     return res.status(500).json(error.message);
   }
 };
+
 const getStudent = async (req, res) => {
   const { id } = req.params;
   try {
