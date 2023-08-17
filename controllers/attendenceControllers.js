@@ -1,6 +1,6 @@
 const Attendence = require("../models/Attendence");
 const Student = require("../models/Student");
-const corn = require("node-cron");
+const cron = require("node-cron");
 
 const markAttendance = async (req, res) => {
   const { id } = req.params;
