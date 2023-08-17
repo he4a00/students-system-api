@@ -9,6 +9,9 @@ const studentRoutes = require("./routes/studentRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const teacherRoutes = require("./routes/teacherRoutes");
 const attendenceRoutes = require("./routes/attendenceRoutes");
+const {
+  updateAttendanceForNewDay,
+} = require("./controllers/attendenceControllers");
 
 dotenv.config();
 
@@ -25,6 +28,8 @@ mongoose
   .catch((err) => {
     console.log("Error connecting to MongoDB:", err);
   });
+
+updateAttendanceForNewDay();
 
 app.listen(process.env.PORT, () => {
   console.log("listening on port", process.env.PORT);

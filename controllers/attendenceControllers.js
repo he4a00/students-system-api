@@ -20,50 +20,54 @@ const markAttendance = async (req, res) => {
         attendance.date.toDateString() === attendanceDate.toDateString()
     );
 
-    if (existingAttendance) {
-      return res.status(409).json("Attendance already marked for this date");
-    }
+    if (!existingAttendance) {
+      // Create a new attendance record and set it to false
+      const attendanceRecord = new Attendence({
+        date: attendanceDate,
+        present: false, // Set to false since there's no attendance recorded yet
+      });
+      await attendanceRecord.save();
+      student.attendence.push(attendanceRecord);
+      await student.save();
 
-    const attendanceRecord = new Attendence({
-      date: attendanceDate,
-      present: true,
-    });
-    await attendanceRecord.save();
-    student.attendence.push(attendanceRecord._id);
-    await student.save();
-    return res.status(200).json(student);
+      return res.status(200).json(student);
+    } else {
+      // If attendance exists, update its present value based on the request
+      existingAttendance.present = present === "true";
+      await existingAttendance.save();
+
+      return res.status(200).json(student);
+    }
   } catch (error) {
     return res.status(500).json(error.message);
   }
 };
 
-cron.schedule("0 0 * * *", async () => {
-  try {
-    const students = await Student.find().populate("attendence");
+const updateAttendanceForNewDay = async () => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    for (const student of students) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+  const students = await Student.find().populate("attendence");
+  for (const student of students) {
+    const existingAttendance = student.attendence.find(
+      (attendance) => attendance.date.toDateString() === today.toDateString()
+    );
 
-      const attendanceRecord = student.attendence.find(
-        (attendance) => attendance.date.toDateString() === today.toDateString()
-      );
-
-      if (!attendanceRecord) {
-        const newAttendanceRecord = new Attendence({
-          date: today,
-          present: false,
-        });
-        await newAttendanceRecord.save();
-        student.attendence.push(newAttendanceRecord._id);
-        await student.save();
-      }
+    if (!existingAttendance) {
+      const attendanceRecord = new Attendence({
+        date: today,
+        present: true,
+      });
+      await attendanceRecord.save();
+      student.attendence.push(attendanceRecord._id);
+      await student.save();
     }
-
-    console.log("Daily attendance update completed.");
-  } catch (error) {
-    console.error("Error updating daily attendance:", error);
   }
-});
 
-module.exports = { markAttendance };
+  // Schedule the next update for the next day
+  const nextMidnight = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  const timeUntilNextMidnight = nextMidnight - now;
+  setTimeout(updateAttendanceForNewDay, timeUntilNextMidnight);
+};
+
+module.exports = { markAttendance, updateAttendanceForNewDay };
