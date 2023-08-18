@@ -41,23 +41,6 @@ const studentSchema = new mongoose.Schema({
   ],
 });
 
-studentSchema.pre("remove", async function () {
-  await mongoose
-    .model("MonthlyPayment")
-    .deleteMany({ _id: { $in: this.monthlyPayment } });
-
-  await mongoose
-    .model("Teacher")
-    .updateMany(
-      { _id: { $in: this.teacher } },
-      { $pull: { students: this._id } }
-    );
-
-  await mongoose
-    .model("Attendance")
-    .deleteMany({ _id: { $in: this.attendance } });
-});
-
 const Student = mongoose.model("Student", studentSchema);
 
 module.exports = Student;

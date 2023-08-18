@@ -1,4 +1,7 @@
+const Attendence = require("../models/Attendence");
+const MonthlyPayment = require("../models/MonthlyPayment");
 const Student = require("../models/Student");
+const Teacher = require("../models/Teacher");
 
 const getAllStudents = async (req, res) => {
   try {
@@ -103,13 +106,36 @@ const deleteStudent = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    const deletedStudent = await Student.findByIdAndDelete(studentId);
+    // Find the student and populate related data
+    const student = await Student.findById(studentId)
+      .populate("monthlyPayment teacher attendence")
+      .exec();
 
-    if (!deletedStudent) {
+    if (!student) {
       return res.status(404).json("Student not found");
     }
 
-    return res.status(200).json(deletedStudent);
+    // Delete monthly payments
+    for (const payment of student.monthlyPayment) {
+      await MonthlyPayment.findByIdAndDelete(payment);
+    }
+
+    // Remove student from teachers' student lists
+    for (const teacher of student.teacher) {
+      await Teacher.findByIdAndDelete(teacher);
+    }
+
+    // Delete attendance records
+    for (const attendance of student.attendence) {
+      await Attendence.findByIdAndDelete(attendance);
+    }
+
+    // Finally, delete the student
+    await Student.findByIdAndDelete(studentId);
+
+    return res
+      .status(200)
+      .json({ message: "Student and related data deleted" });
   } catch (error) {
     return res.status(500).json(error.message);
   }
