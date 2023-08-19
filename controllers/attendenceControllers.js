@@ -55,7 +55,7 @@ const updateAttendanceForNewDay = async () => {
     if (!existingAttendance) {
       const attendanceRecord = new Attendence({
         date: today,
-        present: true,
+        present: false,
       });
       await attendanceRecord.save();
       student.attendence.push(attendanceRecord._id);
