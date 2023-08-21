@@ -1,6 +1,51 @@
 const Attendence = require("../models/Attendence");
 const Student = require("../models/Student");
 
+// get the attendance by student id and will contain pagination
+
+const getAttendanceById = async (req, res) => {
+  const { studentId } = req.params;
+
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const perPage = 10;
+    const totalAttendances = await Student.findOne({ _id: studentId })
+      .select("attendence")
+      .populate("attendence")
+      .then((student) => student.attendence.length);
+
+    const totalPages = Math.ceil(totalAttendances / perPage);
+
+    if (totalPages === 0) {
+      return res.status(200).json({
+        totalAttendances: 0,
+        totalPages: 0,
+        currentPage: page,
+        attendences: [],
+      });
+    }
+
+    const student = await Student.findOne({ _id: studentId }).populate({
+      path: "attendence",
+      options: {
+        skip: (page - 1) * perPage,
+        limit: perPage,
+      },
+    });
+
+    const attendences = student.attendence;
+
+    res.status(200).json({
+      totalAttendances: totalAttendances,
+      totalPages: totalPages,
+      currentPage: page,
+      attendences,
+    });
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
+
 const markAttendance = async (req, res) => {
   const { id } = req.params;
   const { date, present } = req.body;
@@ -69,4 +114,8 @@ const updateAttendanceForNewDay = async () => {
   setTimeout(updateAttendanceForNewDay, timeUntilNextMidnight);
 };
 
-module.exports = { markAttendance, updateAttendanceForNewDay };
+module.exports = {
+  markAttendance,
+  updateAttendanceForNewDay,
+  getAttendanceById,
+};
