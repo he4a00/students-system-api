@@ -21,6 +21,10 @@ const studentSchema = new mongoose.Schema({
     enum: ["male", "female"],
     required: true,
   },
+  eduyear: {
+    type: String,
+    required: [true, "student must have a education year"],
+  },
   monthlyPayment: [
     {
       type: mongoose.Schema.Types.ObjectId,

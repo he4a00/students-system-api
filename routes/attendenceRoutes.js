@@ -7,6 +7,6 @@ const {
 
 const router = express.Router();
 
-router.post("/:id", verifyToken, markAttendance);
-router.get("/:studentId/attendances", verifyToken, getAttendanceById);
+// router.post("/:id", verifyToken, markAttendance);
+// router.get("/:studentId/", verifyToken, getAttendanceById);
 module.exports = router;

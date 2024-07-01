@@ -6,9 +6,20 @@ const Teacher = require("../models/Teacher");
 const getAllStudents = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-
     const perPage = 10;
-    const totalStudents = await Student.countDocuments();
+    let query = {};
+
+    // Filter by name if query parameter exists
+    if (req.query.name) {
+      query.name = { $regex: req.query.name, $options: "i" };
+    }
+
+    // Filter by education year if query parameter exists
+    if (req.query.eduyear) {
+      query.eduyear = req.query.eduyear;
+    }
+
+    const totalStudents = await Student.countDocuments(query); // Count documents based on query
     const totalPages = Math.ceil(totalStudents / perPage);
 
     if (totalPages === 0) {
@@ -20,7 +31,7 @@ const getAllStudents = async (req, res) => {
       });
     }
 
-    const students = await Student.find()
+    const students = await Student.find(query)
       .skip((page - 1) * perPage)
       .limit(perPage)
       .populate("monthlyPayment")
@@ -33,9 +44,11 @@ const getAllStudents = async (req, res) => {
       students,
     });
   } catch (error) {
-    return res.status(500).json(error.message);
+    return res.status(500).json({ error: error.message });
   }
 };
+
+module.exports = getAllStudents;
 
 const getStudent = async (req, res) => {
   const { id } = req.params;
@@ -57,7 +70,7 @@ const getStudent = async (req, res) => {
 
 const addStudent = async (req, res) => {
   try {
-    const { name, phoneNumber, gender } = req.body;
+    const { name, phoneNumber, gender, eduyear } = req.body;
 
     const existingStudent = await Student.findOne({ phoneNumber: phoneNumber });
 
@@ -69,6 +82,7 @@ const addStudent = async (req, res) => {
       name,
       phoneNumber,
       gender,
+      eduyear,
     });
 
     return res.status(200).json(student);
@@ -79,7 +93,7 @@ const addStudent = async (req, res) => {
 
 const updateStudent = async (req, res) => {
   try {
-    const { name, phoneNumber, gender } = req.body;
+    const { name, phoneNumber, gender, eduyear } = req.body;
     const { studentId } = req.params;
 
     const updatedStudent = await Student.findOneAndUpdate(
@@ -88,6 +102,7 @@ const updateStudent = async (req, res) => {
         name,
         phoneNumber,
         gender,
+        eduyear,
       },
       { new: true }
     );
@@ -141,10 +156,28 @@ const deleteStudent = async (req, res) => {
   }
 };
 
+const filterByEducationYear = async (req, res) => {
+  try {
+    const { eduyear } = req.query;
+    console.log("Received eduyear:", eduyear);
+
+    if (!eduyear) {
+      return res.status(400).json({ error: "Education year is required" });
+    }
+
+    const students = await Student.find({ eduyear: eduyear });
+
+    return res.status(200).json(students);
+  } catch (error) {
+    return res.status(500).json(error.message);
+  }
+};
+
 module.exports = {
   addStudent,
   getAllStudents,
   getStudent,
   updateStudent,
   deleteStudent,
+  filterByEducationYear,
 };

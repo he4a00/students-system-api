@@ -29,7 +29,7 @@ mongoose
     console.log("Error connecting to MongoDB:", err);
   });
 
-updateAttendanceForNewDay();
+// updateAttendanceForNewDay();
 
 app.listen(process.env.PORT, () => {
   console.log("listening on port", process.env.PORT);
@@ -41,4 +41,4 @@ app.use("/api/users", userRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/teacher", teacherRoutes);
-app.use("/api/attendence", attendenceRoutes);
+// app.use("/api/attendence", attendenceRoutes);
