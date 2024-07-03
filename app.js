@@ -41,4 +41,4 @@ app.use("/api/users", userRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/teacher", teacherRoutes);
-// app.use("/api/attendence", attendenceRoutes);
+app.use("/api/attendence", attendenceRoutes);

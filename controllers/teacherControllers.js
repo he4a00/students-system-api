@@ -3,7 +3,7 @@ const Teacher = require("../models/Teacher");
 
 const getAllTeachers = async (req, res) => {
   try {
-    const teachers = await Teacher.find({});
+    const teachers = await Teacher.find();
     const totalTeachers = await Teacher.countDocuments();
 
     return res.status(200).json({ totalTeachers, teachers });
@@ -13,36 +13,44 @@ const getAllTeachers = async (req, res) => {
 };
 
 const addTeacher = async (req, res) => {
+  const { name, gender, subject, schedule } = req.body;
+  try {
+    const teacher = new Teacher({ name, gender, subject, schedule });
+    await teacher.save();
+    return res.status(201).json(teacher);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const addTeacherToStudent = async (req, res) => {
   const { id } = req.params;
-  const { name, gender, subject } = req.body;
+  const { name } = req.body;
+
   try {
     const student = await Student.findOne({ _id: id });
     if (!student) {
       return res.status(404).json("Student not found");
     }
 
-    const existingTeacher = await Teacher.findOne({
-      name,
-      _id: { $in: student.teacher },
-    });
-
-    if (existingTeacher) {
-      return res
-        .status(409)
-        .json("This student already has a teacher with the same name");
+    const teacher = await Teacher.findOne({ name: name });
+    if (!teacher) {
+      return res.status(404).json("Teacher not found");
     }
 
-    const teacher = new Teacher({ name, gender, subject });
+    if (student.teacher.includes(teacher._id)) {
+      return res.status(409).json("Teacher already assigned to this student");
+    }
 
     student.teacher.push(teacher._id);
-    teacher.students.push(student._id);
-
     await student.save();
+
+    teacher.students.push(id);
     await teacher.save();
 
-    return res.status(200).json(student);
+    return res.status(200).json({ student, teacher });
   } catch (error) {
-    return res.status(500).json(error.message);
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -118,4 +126,5 @@ module.exports = {
   getTeachersForStudent,
   getStudentsForTeacher,
   getAllTeachers,
+  addTeacherToStudent,
 };

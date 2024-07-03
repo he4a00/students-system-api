@@ -20,6 +20,23 @@ const teacherSchema = new mongoose.Schema({
       ref: "Student",
     },
   ],
+
+  schedule: [
+    {
+      day: {
+        type: String,
+        required: true,
+      },
+      startTime: {
+        type: String,
+        required: true,
+      },
+      endTime: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
 });
 
 const Teacher = mongoose.model("Teacher", teacherSchema);
